@@ -19,7 +19,7 @@ classdef Quadrotor
     % Methods (instance and static)
     methods
         function [forces, accelerations] = dynamics(obj, inputs)
-            forces = obj.rotationMatrix * [0; 0; sum(inputs)] + [0; 0; obj.mass * obj.gravity];
+            forces = obj.rotationMatrix * [0; 0; sum(inputs)] + [0; 0; -obj.mass * obj.gravity];
             accelerations = forces / obj.mass;
         end
 
