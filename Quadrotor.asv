@@ -2,19 +2,47 @@ classdef Quadrotor
     % Instance variables, should probably do some property validation
     % Did not know that was a thing ngl
     properties
-        bodyRates (1, 3) = [0, 0, 0]        
-        eulerRates (1, 3) = [0, 0, 0]
+        bodyRates (1, 3) = [0, 0, 0]                                % rad/s
+        eulerRates (1, 3) = [0, 0, 0]                               % rad/s
         thrust (1,4) = [0, 0, 0, 0]                                 % N?
         rotationMatrix (3, 3) = [0, 0, 0; 0, 0, 0; 0, 0, 0]         % Body to inertial
         mass = 0.5                                                  % kg
-        inertiaMatrix (3, 3) = diag(0.0032, 0.0032, 0.0055)         % kgm^2
+        inertiaMatrix (3, 3) = diag([0.0032, 0.0032, 0.0055])         % kgm^2
         rotorTorqueConstant = 0.01691                               % 1/m
         rotorMomentArm = 0.17                                       % m
-        gravity = 9.81                                              % m/s^2                     
+        gravity = 9.81                                              % m/s^2
+
+        % This representation of state may be wrong
+        state (1, 12) = [0, 0, 0, 0, 0, 0] + eulerRates + bodyRates
     end
     
     % Methods (instance and static)
     methods
+        function [forces, accelerations] = dynamics(obj, inputs)
+            forces = obj.rotationMatrix * [0; 0; sum(inputs)] + [0; 0; obj.mass * obj.gravity];
+            accelerations = forces / obj.mass;
+        end
+
+        function [moments, accelerations] = rotationalDynamics(obj, inputs)
+            tempBodyRates = num2cell(obj.bodyRates);
+            [p, q, r] = tempBodyRates{:};
+
+            tempInertiaMatrix = num2cell(diag(obj.inertiaMatrix));
+            [I_xx, I_yy, I_zz] = tempInertiaMatrix{:};
+
+            moments = [0, 0, 0];
+
+            moments(3) = 
+        end
+        
+        function obj = calcRotationMatrix(obj)
+            tempEulerRates = num2cell(obj.eulerRates);
+            [phi, theta, psi] = tempEulerRates{:};
+
+            obj.rotationMatrix = [cos(theta) * cos(psi), cos(theta) * sin(psi), -sin(theta); ...
+                sin(theta) * sin(phi) * cos(psi) - cos(phi) * sin(psi), sin(theta) * sin(phi) * sin(psi) + cos(phi) * cos(psi), sin(phi) * cos(theta); ...
+                sin(phi) * sin(psi) + cos(phi) * sin(theta) * cos(psi), sin(theta) * sin(psi) * cos(phi) - sin(phi) * sin(psi), cos(theta) * cos(phi)];
+        end
 
     end
 end
