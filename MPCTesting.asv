@@ -8,13 +8,15 @@ inputInit = 0;  % NEEDS TO BE ASSIGNED
 
 stateCurr = xinit;
 numIterations = 3;  % number of iterations of DDP to be ran
-prevInputs = inputInit;     % some initial guess for the control, maybe from a full iteration warm DDP start
+warmDDP = DDP();    % a warm start for the DDP code, giving full vector of control inputs
+prevInputs = warmDDP;     % some initial guess for the control, maybe from a full iteration warm DDP start
 stateVec = zeros(length(xinit), finalStep+1);   % initializing a state vector to track, not sure on dimensions
 stateVec(:,1) = xinit;
 inputVec = zeros(length(inputInit), finalControl+1);    % initializing control vector
-inputVec(:,1) = inputInit;
+appInput =  prevInputs(:,1);
+inputVec(:,1) = appInput;    % pulling out initial value from warm DDP and saving as applied
 
-for t = 0:finalControl      % vector from 0:799, length 800
+for t = 0:finalState      % vector from 0:800, length 801
     
     timeRem = finalControl - t; % number of control inputs remaining
     nextInputs = DDP(stateCurr, prevInputs, numIterations, timeRem);    
@@ -29,3 +31,16 @@ for t = 0:finalControl      % vector from 0:799, length 800
     stateCurr = nextState;  % could probably combine lines, here for clarity
     prevInputs = nextInputs;
 
+end
+
+
+% we have input and state at time 0
+for t = 0:finalState        % vector 0:800, length 801
+    stateVec(:,t+1) = prevState;
+    inputVec(:,t+1) = appInput;
+    nextState = dynamics(prevState, appInput);
+    nextInputs = DDP(nextState, prevInputs, numIterations, timeRem);    
+    
+    
+    
+    
