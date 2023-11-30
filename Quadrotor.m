@@ -16,6 +16,10 @@ classdef Quadrotor
         state (1, 12) = [0, 0, 0, 0, 0, 0] + eulerRates + bodyRates
     end
     
+    % f(x, u) = x_t+1 = x_t + d_t * x_dot
+    % f'(x, u) = x_ddot * dt
+
+
     % Methods (instance and static)
     methods
         function [forces, accelerations] = dynamics(obj, inputs)
