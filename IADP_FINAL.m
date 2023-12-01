@@ -1,19 +1,18 @@
-function [gains, iterationCosts] = IADP_FINAL(initial, dynamics, costFn, finalCost)
+function [currentGains, iterationCosts] = IADP_FINAL(initial, dynamics, costs, derivatives)
+    maxIterations = 20;
     iterationCosts = zeros([1, maxIterations]);
-    currentGains.feedbackGains = zeros([12, 800]);
-    currentGains.feedbackGains = zeros(4, 800);
+    n = 12;
+    m = 4;
+    horizon = 800;
+    currentGains = repmat(struct('K', zeros(m, n), 'k', zeros(m, 1)), horizon, 1);
 
     for i = 1:maxIterations
-        [iterationCosts(i), currentGains] = step(initial, dynamics, costFn, finalCost, currentGains);
+        [iterationCosts(i), currentGains] = step(initial, dynamics, costs, currentGains, derivatives);
     end
 
     % Hardcoding a bunch of simulation vars for rn
-    function [cost, gains] = step(initial, dynamics, costFn, finalCost, currentGains)
-        [states, inputs, cost] = forwardPass(initial, dynamics, costFn, finalCost, currentGains)
-        gains = backwardPass(states, inputs, );
-
-
-        %gains.feedbackGains = feedbackGains;
-        %gains.feedforwardGains = feedforwardGains;
+    function [cost, gains] = step(initial, dynamics, costs, currentGains, derivatives)
+        [states, inputs, cost] = forwardPass(initial, dynamics, costs, currentGains);
+        gains = backwardPass(states, inputs, derivatives);
     end    
 end

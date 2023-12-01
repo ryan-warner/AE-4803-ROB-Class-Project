@@ -4,7 +4,7 @@ function gains = backwardPass(states, inputs, derivatives)
     [Vx, Vxx] = term_cost_derivs(states(:, end));
     
     for i = 800:-1:1
-        q_terms = calcQTerms()
+        q_terms = calcQTerms(derivatives, )
         backwardsUpdateTerms = backwardsUpdate(q_terms, gains(i))
         gains(i) = calcGains(q_terms)
     end
@@ -13,11 +13,13 @@ end
 %% 
 
 % My derivatives might need to be evaluated... think I left them in the HW
-% as already evaluated, 
+% as already evaluated, so this is a bit problematic. Can rework tho, not a
+% huge deal at all.
 
 %%
 
 function q_terms = calcQTerms(derivatives, backwardsUpdateTerms)
+    
     q_terms.q_x = derivatives.l_x + derivatives.f_x.' * backwardsUpdateTerms.V_x; % OK
     q_terms.q_u = derivatives.l_u + derivatives.f_u.' * backwardsUpdateTerms.V_x; % OK
     q_terms.q_xx = derivatives.l_xx + derivatives.f_x.' * backwardsUpdateTerms.V_xx * derivatives.f_x; % OK
