@@ -33,6 +33,13 @@ function q_terms = calcQTerms(derivatives, state, input, backwardsUpdateTerms)
     q_terms.q_xu = derivatives.l_xu + derivatives.f_x.' * backwardsUpdateTerms.V_xx * derivatives.f_u; % OK
 
     % He does other things to sort out the other matrices...?
+    n = 12;
+    m = 4;
+    for i = 1:n
+        q_terms.q_xx = q_terms.q_xx + backwardsUpdateTerms.V_x(i) * reshape(derivatives.f_xx(i, :, :), n, n);
+        q_terms.q_uu = q_terms.q_uu + backwardsUpdateTerms.V_x(i) * reshape(derivatives.f_uu(i, :, :), m, m);
+        q_terms.q_xu = q_terms.q_xu + backwardsUpdateTerms.V_x(i) * reshape(derivatives.f_xu(i, :, :), n, m);
+    end
 
     q_terms.q_ux = q_terms.q_xu'; % OK
 end

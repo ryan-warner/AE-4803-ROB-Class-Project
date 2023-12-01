@@ -16,8 +16,8 @@ horizon = tf / time_step;
 quadVince;
 
 Q = 1.0 * diag([1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
-R = 1.0 * diag([1.0, 1.0, 1.0, 1.0]);
-Qf = 10.0 * diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
+R = 10.0 * diag([1.0, 1.0, 1.0, 1.0]);
+Qf = 100.0 * diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]);
 goal_state = [5; 3; 2; 0; 0; 0; 0; 0; 0; 0; 0; 0];
 
 cost = @(state, control) 0.5 * (state - goal_state)' * Q * (state - goal_state) + 0.5 * control' * R * control;
@@ -38,7 +38,7 @@ ic = [-3; -2; -1; 0; 0; 0; 0; 0; 0; 0; 0; 0];
 horizon = 800;
 init_ctl_params = repmat(struct('K', zeros(m, n), 'k', zeros(m, 1)), horizon, 1);
 
-[gains, costs] = IADP_FINAL(ic, dyn, costs, derivatives)
+[gains, iadp_costs] = IADP_FINAL(ic, dyn, costs, derivatives)
 
 
 % dyn_derivs = function handle returning f_x, f_u, f_xx, f_uu, f_ux
@@ -49,7 +49,7 @@ init_ctl_params = repmat(struct('K', zeros(m, n), 'k', zeros(m, 1)), horizon, 1)
 % Could
 
 %[ctl_params, ddp_traj_costs] = iadp(ic, init_ctl_params, dyn, dyn_derivs, cost, cost_derivs, term_cost, term_cost_derivs,  MaxIters=5, Mode="DDP");
-[ddp_states, ~, ~] = forwardPass(ic, dynamics, costs, gains);
+[ddp_states, ~, ~] = forwardPass(ic, dyn, costs, gains);
 
 disp("Done :)")
 

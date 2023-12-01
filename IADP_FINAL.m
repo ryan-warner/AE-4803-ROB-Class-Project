@@ -1,5 +1,5 @@
 function [currentGains, iterationCosts] = IADP_FINAL(initial, dynamics, costs, derivatives)
-    maxIterations = 20;
+    maxIterations = 3;
     iterationCosts = zeros([1, maxIterations]);
     n = 12;
     m = 4;
