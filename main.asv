@@ -33,10 +33,8 @@ init_ctl_params = repmat(struct('K', zeros(m, n), 'd', zeros(m, 1)), horizon, 1)
 
 % dyn_derivs = function handle returning f_x, f_u, f_xx, f_uu, f_ux
 % cost_derivs = funciton handle returning l_x. l_u, l_xx, l_uu, l_ux
-% term_cost_derivs = function handle returning l_x_f, l_xx_f
+% term_cost_derivs = function handle re
 
-% Maybe we matlab function all the derivatives and return a struct...?
-% Could
 
 %[ctl_params, ddp_traj_costs] = iadp(ic, init_ctl_params, dyn, dyn_derivs, cost, cost_derivs, term_cost, term_cost_derivs,  MaxIters=5, Mode="DDP");
 %[ddp_states, ~, ~] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
