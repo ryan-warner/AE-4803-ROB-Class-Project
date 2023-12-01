@@ -35,11 +35,19 @@ end
 
 
 % we have input and state at time 0
-for t = 0:finalState        % vector 0:800, length 801
-    stateVec(:,t+1) = prevState;
-    inputVec(:,t+1) = appInput;
+for t = 1:finalState        % vector 1:800, length 800, making it easier to index
+    timeRem = finalControl - t; % number of control inputs remaining
+    %stateVec(:,t+1) = prevState;
+    %inputVec(:,t+1) = appInput;
+    % nextState = dynamics(prevState, appInput);
+    nextInputs = DDP(currState, prevInputs, numIterations, timeRem); % will run the warm start an additional # of times
+    appInput = nextInputs(:,1);
     nextState = dynamics(prevState, appInput);
-    nextInputs = DDP(nextState, prevInputs, numIterations, timeRem);    
+    inputVec(:,t) = appInput;
+    stateVec(:,t+1) = nextState;
+    prevState = nextState;
+
+    
     
     
     

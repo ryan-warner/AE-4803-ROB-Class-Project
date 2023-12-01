@@ -6,43 +6,33 @@ finalControl = finalStep - 1;   % final time step for control to be input, tf-1
 xinit = 0;      % NEEDS TO BE ASSIGNED
 inputInit = 0;  % NEEDS TO BE ASSIGNED
 
-stateCurr = xinit;
+currState = xinit;
 numIterations = 3;  % number of iterations of DDP to be ran
 warmDDP = DDP();    % a warm start for the DDP code, giving full vector of control inputs
 prevInputs = warmDDP;     % some initial guess for the control, maybe from a full iteration warm DDP start
 stateVec = zeros(length(xinit), finalStep+1);   % initializing a state vector to track, not sure on dimensions
 stateVec(:,1) = xinit;
-inputVec = zeros(length(inputInit), finalControl+1);    % initializing control vector
-appInput =  prevInputs(:,1);
-inputVec(:,1) = appInput;    % pulling out initial value from warm DDP and saving as applied
+inputVec = zeros(length(warmDDP(:,1)), finalControl+1);    % initializing control vector
+% appInput =  prevInputs(:,1);
+% inputVec(:,1) = appInput;    % pulling out initial value from warm DDP and saving as applied
 
-for t = 0:finalState      % vector from 0:800, length 801
-    
-    timeRem = finalControl - t; % number of control inputs remaining
-    nextInputs = DDP(stateCurr, prevInputs, numIterations, timeRem);    
-    % DDP will need to take all of the above in, probably with different
-    % syntax, prev inputs passed in as starting point for DDP, timeRem
-    % becomes tf for DDP, stateCurr is xinit for DDP, numIterations is the
-    % number of iterations the DDP will be ran
-    nextState = dynamics(stateCurr, nextInputs(:,1));   % apply determined input from DDP
-    appInput = nextInputs(:,1);     % saving the actual input that was applied
-    
-    stateVec(:,t+2) = nextState;
-    stateCurr = nextState;  % could probably combine lines, here for clarity
-    prevInputs = nextInputs;
 
-end
 
 
 % we have input and state at time 0
-for t = 0:finalState        % vector 0:800, length 801
+for t = 1:finalState        % vector 1:800, length 800, making it easier to index
     timeRem = finalControl - t; % number of control inputs remaining
-    stateVec(:,t+1) = prevState;
-    inputVec(:,t+1) = appInput;
+ 
+    nextInputs = DDP(currState, prevInputs, numIterations, timeRem); % will run the warm start an additional # of times
+    appInput = nextInputs(:,1);
     nextState = dynamics(prevState, appInput);
-    nextInputs = DDP(nextState, prevInputs, numIterations, timeRem); 
+    inputVec(:,t) = appInput;
+    stateVec(:,t+1) = nextState;
+    prevState = nextState;
+
     
-    
+end
+
     
     
     
