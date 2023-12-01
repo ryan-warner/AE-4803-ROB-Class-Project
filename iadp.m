@@ -11,43 +11,37 @@ function [ctl_params, traj_costs] = iadp(ic, init_ctl_params, dyn, dyn_derivs, c
 
         options.StopTol (1, 1) {mustBeNonnegative} = 0
         options.MaxIters (1, 1) {mustBePositive, mustBeInteger} = 100
-        options.RegDamping (1, 1) {mustBeNonnegative} = 0.0;
-        options.RegFactor (1, 1) {mustBeNonnegative} = 2;
-        options.Mode (1, 1) string {mustBeMember(options.Mode, ["iLQR", "DDP"])} = "iLQR"
+        % options.RegDamping (1, 1) {mustBeNonnegative} = 0.0;
+        % options.RegFactor (1, 1) {mustBeNonnegative} = 2;
+        options.Mode (1, 1) string {mustBeMember(options.Mode, ["iLQR", "DDP"])} = "DDP"
     end
 
     traj_costs = zeros(1, options.MaxIters);
     ctl_params = init_ctl_params;
 
-    if options.Mode == "iLQR"
-        create_quad = @ilqr_quad;
-    elseif options.Mode == "DDP"
-        create_quad = @ddp_quad;
-    else
-        error("Invalid Mode.")
-    end
+    create_quad = @ddp_quad;
 
     for i = 1:options.MaxIters
         [states, controls, traj_costs(i)] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
         ctl_params = backward_pass(states, controls, dyn_derivs, cost_derivs, term_cost_derivs, create_quad, 0.0);
 
-        if options.RegDamping > 0
-            % Not the most efficient but works. Could reuse trajectory
-            % rollout to make it faster.
-            [~, ~, tc] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
-            reg_iter = 1;
+        % if options.RegDamping > 0
+        %     % Not the most efficient but works. Could reuse trajectory
+        %     % rollout to make it faster.
+        %     [~, ~, tc] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
+        %     reg_iter = 1;
+        % 
+        %     while tc > traj_costs(i)
+        %         ctl_params = backward_pass(states, controls, dyn_derivs, cost_derivs, term_cost_derivs, create_quad, options.RegDamping * (options.RegFactor ^ reg_iter));
+        %         [~, ~, tc] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
+        %         reg_iter = reg_iter + 1;
+        %     end
+        % end
 
-            while tc > traj_costs(i)
-                ctl_params = backward_pass(states, controls, dyn_derivs, cost_derivs, term_cost_derivs, create_quad, options.RegDamping * (options.RegFactor ^ reg_iter));
-                [~, ~, tc] = forward_pass(ic, dyn, cost, term_cost, ctl_params);
-                reg_iter = reg_iter + 1;
-            end
-        end
-
-        if i > 1 && options.StopTol > 0 && stop_cond(traj_costs(i - 1), traj_costs(i), options.StopTol)
-            traj_costs = traj_costs(1:i);
-            break;
-        end
+        % if i > 1 && options.StopTol > 0 && stop_cond(traj_costs(i - 1), traj_costs(i), options.StopTol)
+        %     traj_costs = traj_costs(1:i);
+        %     break;
+        % end
     end
 end
 
@@ -57,28 +51,12 @@ function ctl_params = solve_quad(state, control, q_params)
     ctl_params = struct('K', K, 'd', control + k - K * state);
 end
 
-
-function q_params = ilqr_quad(state, control, next_value_params, dyn_derivs, cost_derivs)
-    [fx, fu, ~, ~, ~] = dyn_derivs(state, control);
-    [cx, cu, cxx, cuu, cxu] = cost_derivs(state, control);
-    % fux = fxu';
-    cux = cxu';
-
-    q_params = struct('Qx', cx + fx' * next_value_params.Vx, ...
-                      'Qu', cu + fu' * next_value_params.Vx, ...
-                      'Qxx', cxx + fx' * next_value_params.Vxx * fx, ...
-                      'Quu', cuu + fu' * next_value_params.Vxx * fu, ...
-                      'Qux', cux + fu' * next_value_params.Vxx * fx);
-
-    q_params.Qxu = q_params.Qux';
-end
-
 function q_params = ddp_quad(state, control, next_value_params, dyn_derivs, cost_derivs)
     [fx, fu, fxx, fuu, fxu] = dyn_derivs(state, control);
     [cx, cu, cxx, cuu, cxu] = cost_derivs(state, control);
     cux = cxu';
-    n = size(state, 1);
-    m = size(control, 1);
+    n = 12;
+    m = 4;
 
     % This is not a fast way to do this but it is less error prone when
     % encoding the equations. You can speed it up a lot using vectorized
@@ -121,7 +99,7 @@ function ctl_params = backward_pass(states, controls, dyn_derivs, cost_derivs, t
     
     for t = horizon:-1:1
         qfun_params(t) = create_quad(states(:, t), controls(:, t), valfun_params(t + 1), dyn_derivs, cost_derivs);
-        qfun_params(t).Quu = qfun_params(t).Quu + regularizer * eye(m);
+        %qfun_params(t).Quu = qfun_params(t).Quu; %+ regularizer * eye(m);
         valfun_params(t) = value_params(qfun_params(t));
         ctl_params(t) = solve_quad(states(:, t), controls(:, t), qfun_params(t));
     end

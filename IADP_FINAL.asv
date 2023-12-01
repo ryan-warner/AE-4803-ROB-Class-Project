@@ -1,0 +1,25 @@
+function IADP_FINAL
+
+
+    function q_terms = setQTerms(derivatives)
+        q_terms.q_x = derivatives.l_x + derivatives.f_x.' * backwards_update_terms.V_x; % OK
+        q_terms.q_u = derivatives.l_u + derivatives.f_u.' * backwards_update_terms.V_x; % OK
+        q_terms.q_xx = derivatives.l_xx + derivatives.f_x.' * backwards_update_terms.V_xx * derivatives.f_x; % OK
+        q_terms.q_uu = derivatives.l_uu + derivatives.f_u.' * backwards_update_terms.V_xx * derivatives.f_u; % OK
+        q_terms.q_xu = derivatives.l_xu + derivatives.f_x.' * backwards_update_terms.V_xx * derivatives.f_u; % OK
+
+        % He does other things to sort out the other matrices...?
+
+        q_terms.q_ux = q_terms.q_xu; % OK
+    end
+
+    function backwards_update_terms = backwardsUpdate(q_terms)
+            backwards_update_terms.V_x = q_terms.q_x + obj.gains.K.' * obj.q_terms.q_uu * obj.gains.k + obj.gains.K.' * obj.q_terms.q_u + obj.q_terms.q_ux.' * obj.gains.k;
+            backwards_update_terms.V_xx = q_terms.q_xx + obj.gains.K.' * obj.q_terms.q_uu * obj.gains.K + obj.gains.K.' * obj.q_terms.q_ux + obj.q_terms.q_ux.' * obj.gains.K;
+        end
+    
+    function gains = setGains(q_terms)
+        gains.K = -inv(q_terms.q_uu) * q_terms.q_ux;
+        gains.k = -inv(q_terms.q_uu) * q_terms.q_u;
+    end
+end

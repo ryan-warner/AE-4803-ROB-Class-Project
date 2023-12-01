@@ -12,6 +12,6 @@ function [states, inputs, traj_cost] = forward_pass(ic, dyn, cost, term_cost, ct
         states(:, t + 1) = dyn(states(:, t), inputs(:, t));
     end
 
-    costs(end) = term_cost(states(:, end));
+    costs(end) = 
     traj_cost = sum(costs);
 end

@@ -1,12 +1,12 @@
 n = 12;
 m = 4;
-dt = 0.01; % Idk
+dt = 0.01;
 
-mass = 0.5                                                  % kg
-inertiaMatrix = diag([0.0032, 0.0032, 0.0055])              % kgm^2
-rotorTorqueConstant = 0.01691                               % 1/m
-rotorMomentArm = 0.17                                       % m
-gravity = 9.81                                              % m/s^2
+mass = 0.5;                                                 % kg
+inertiaMatrix = diag([0.0032, 0.0032, 0.0055]);             % kgm^2
+rotorTorqueConstant = 0.01691;                              % 1/m
+rotorMomentArm = 0.17;                                      % m
+gravity = 9.81;                                             % m/s^2
 
 x = sym('x', [n, 1]);
 u = sym('u', [m, 1]);
@@ -18,11 +18,11 @@ assume(u, 'real');
 % Theta     8
 % Psi       9
 
-R = [cos(x(8)) * cos(x(9)), cos(x(8)) * sin(x(9)), -sin(x(8)); ...
+rotationMatrix = [cos(x(8)) * cos(x(9)), cos(x(8)) * sin(x(9)), -sin(x(8)); ...
     sin(x(8)) * sin(x(7)) * cos(x(9)) - cos(x(7)) * sin(x(9)), sin(x(8)) * sin(x(7)) * sin(x(9)) + cos(x(7)) * cos(x(9)), sin(x(7)) * cos(x(8)); ...
     sin(x(7)) * sin(x(9)) + cos(x(7)) * sin(x(8)) * cos(x(9)), sin(x(8)) * sin(x(9)) * cos(x(7)) - sin(x(7)) * sin(x(9)), cos(x(8)) * cos(x(7))];
 
-x_ddot = (R * [0; 0; sum(u)] - [0; 0; mass*gravity]) / mass;
+x_ddot = (rotationMatrix * [0; 0; u(1) + u(2) + u(3) + u(4)] + [0; 0; -mass * gravity]) / mass;
 
 euler_matrix = [1, tan(x(8)) * sin(x(7)), tan(x(8)) * cos(x(7)); ...
     0, cos(x(7)), -sin(x(7)); ...

@@ -1,0 +1,7 @@
+function [states, inputs, cost] = forwardPass(initial, dynamics, cost, finalCost, gains)
+    states = [initial zeros(12, 800)];
+    inputs = zeros(4, 800);
+    cost = zeros(1, 800 + 1);
+
+    function controller = 
+end
