@@ -1,9 +1,6 @@
-function gains = backwardPass(states, inputs, derivatives)
-    n = 12;
-    m = 4;
-    horizon = 800;
+function gains = backwardPass(states, inputs, derivatives, options)
     hover_thrust = 0.5 * 9.81 / 4;
-    gains = repmat(struct('K', randn(m, n), 'k', randn(m, 1), 'optimal_control', hover_thrust * randn(m, 1)), horizon, 1);
+    gains = repmat(struct('K', randn(options.m, options.n), 'k', randn(options.m, 1), 'optimal_control', hover_thrust * randn(options.m, 1)), options.horizon, 1);
    
     [V_x, V_xx] = derivatives.cost_final(states(:, end));
     backwardsUpdateTerms.V_x = V_x;

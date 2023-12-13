@@ -23,9 +23,9 @@ hover_thrust = mass * gravity / 4;
 %R = 0.01 * diag([1.0, 1.0, 1.0, 1.0]);
 %Qf = 1.0 * diag([2000, 2000, 2000, 100, 100, 1000, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]);
 
-Q = 1.0 * diag([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
-R = 1000 * diag([1, 1, 1, 1]);
-Qf = 10.0 * diag([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+Q = 0.01 * diag([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+R = 0.001 * diag([1, 1, 1, 1]);
+Qf = 1.0 * diag([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
 ic = [-3; -2; -1; 0; 0; 0; 0; 0; 0; 0; 0; 0];
 goal_state = [5; 3; 2; 0; 0; 0; 0; 0; 0; 0; 0; 0];
@@ -43,20 +43,17 @@ derivatives.cost_final = cost_final_derivs;
 costs.cost = cost;
 costs.finalCost = cost_final;
 
-
-horizon = 800;
-init_ctl_params = repmat(struct('K', randn(m, n), 'k', randn(m, 1)), horizon, 1);
-
 % Simulation Options
 options.timestep = 0.01;
 options.tf = 8;
 options.horizon = options.tf / options.timestep;
 options.n = size(x, 1);
 options.m = size(u, 1);
+options.maxIterations = 20;
 
-[gains, iadp_costs] = IADP_FINAL(ic, dynamics, costs, derivatives);
+[gains, iadp_costs] = IADP_FINAL(ic, dynamics, costs, derivatives, options);
 
-[ddp_states, ~, ~] = forwardPass(ic, dynamics, costs, gains);
+[ddp_states, ~, ~] = forwardPass(ic, dynamics, costs, gains, options);
 
 disp("Done :)")
 
