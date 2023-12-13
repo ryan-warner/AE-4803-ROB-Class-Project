@@ -4,8 +4,8 @@ function [states, inputs, trajectoryCosts] = forwardPass(initial, dynamics, cost
     trajectoryCosts = zeros(1, 800 + 1);
 
     for i = 1:800
-        iterGains = gains(i, :);
-        inputs(:, i) =  iterGains.K * states(:, i) + iterGains.k;
+        iterGains = gains(i);
+        inputs(:, i) =  iterGains.K * states(:, i) + iterGains.optimal_control;
         trajectoryCosts(i) = costs.cost(states(:, i), inputs(:, i));
         states(:, i + 1) = dynamics(states(:, i), inputs(:, i));
     end

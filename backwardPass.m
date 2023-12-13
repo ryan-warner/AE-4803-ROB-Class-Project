@@ -2,26 +2,22 @@ function gains = backwardPass(states, inputs, derivatives)
     n = 12;
     m = 4;
     horizon = 800;
-    gains = repmat(struct('K', zeros(m, n), 'k', zeros(m, 1)), horizon, 1);
-    
+    hover_thrust = 0.5 * 9.81 / 4;
+    gains = repmat(struct('K', randn(m, n), 'k', randn(m, 1), 'optimal_control', hover_thrust * randn(m, 1)), horizon, 1);
+   
     [V_x, V_xx] = derivatives.cost_final(states(:, end));
     backwardsUpdateTerms.V_x = V_x;
     backwardsUpdateTerms.V_xx = V_xx;
     
     for i = 800:-1:1
         q_terms = calcQTerms(derivatives, states(:, i), inputs(:, i), backwardsUpdateTerms);
-        backwardsUpdateTerms = backwardsUpdate(q_terms, gains(i));
-        gains(i) = calcGains(q_terms);
+        % if any(isnan(q_terms.q_uu), 'all')
+        %     error('q_terms.q_uu has NaN values at iteration %d', i);
+        % end
+        backwardsUpdateTerms = backwardsUpdate(q_terms);
+        gains(i) = calcGains(q_terms, states(:, i), inputs(:, i));
     end
 end
-
-%% 
-
-% My derivatives might need to be evaluated... think I left them in the HW
-% as already evaluated, so this is a bit problematic. Can rework tho, not a
-% huge deal at all.
-
-%%
 
 function q_terms = calcQTerms(derivatives, state, input, backwardsUpdateTerms)
     derivatives = calcDerivatives(state, input, derivatives); % Replaces struct w real values, might be ok
@@ -32,7 +28,6 @@ function q_terms = calcQTerms(derivatives, state, input, backwardsUpdateTerms)
     q_terms.q_uu = derivatives.l_uu + derivatives.f_u.' * backwardsUpdateTerms.V_xx * derivatives.f_u; % OK
     q_terms.q_xu = derivatives.l_xu + derivatives.f_x.' * backwardsUpdateTerms.V_xx * derivatives.f_u; % OK
 
-    % He does other things to sort out the other matrices...?
     n = 12;
     m = 4;
     for i = 1:n
@@ -41,15 +36,26 @@ function q_terms = calcQTerms(derivatives, state, input, backwardsUpdateTerms)
         q_terms.q_xu = q_terms.q_xu + backwardsUpdateTerms.V_x(i) * reshape(derivatives.f_xu(i, :, :), n, m);
     end
 
+    % Add regularization
+    %q_terms.q_uu = q_terms.q_uu + regularizationFactor * eye(m);
+    regularizationFactor= 0.0001;
+    eig_tol = 4;
+    while min(eig(q_terms.q_uu + regularizationFactor * eye(m))) <= eig_tol
+        regularizationFactor = regularizationFactor * 2;
+    end
+
+    q_terms.q_uu = q_terms.q_uu + regularizationFactor * eye(m);
+
     q_terms.q_ux = q_terms.q_xu'; % OK
 end
 
-function backwardsUpdateTerms = backwardsUpdate(q_terms, gains)
-    backwardsUpdateTerms.V_x = q_terms.q_x + gains.K.' * q_terms.q_uu * gains.k + gains.K.' * q_terms.q_u + q_terms.q_ux.' * gains.k;
-    backwardsUpdateTerms.V_xx = q_terms.q_xx + gains.K.' * q_terms.q_uu * gains.K + gains.K.' * q_terms.q_ux + q_terms.q_ux.' * gains.K;
+function backwardsUpdateTerms = backwardsUpdate(q_terms)
+    backwardsUpdateTerms.V_x = q_terms.q_x -  q_terms.q_xu * (q_terms.q_uu \ q_terms.q_u);
+    backwardsUpdateTerms.V_xx = q_terms.q_xx -  q_terms.q_xu * (q_terms.q_uu \ q_terms.q_ux);
 end
 
-function gains = calcGains(q_terms)
-    gains.K = -inv(q_terms.q_uu) * q_terms.q_ux;
-    gains.k = -inv(q_terms.q_uu) * q_terms.q_u;
+function gains = calcGains(q_terms, state, control)
+    gains.K = -pinv(q_terms.q_uu) * q_terms.q_ux;
+    gains.k = -pinv(q_terms.q_uu) * q_terms.q_u;
+    gains.optimal_control = control + gains.k - gains.K * state;
 end
