@@ -9,7 +9,6 @@ function [currentGains, iterationCosts] = IADP_FINAL(initial, dynamics, costs, d
         fprintf('Iteration: %i | Cost: %.02f\n', i, iterationCosts(i));
     end
 
-    % Hardcoding a bunch of simulation vars for rn
     function [cost, gains, states] = step(initial, dynamics, costs, currentGains, derivatives, options)
         [states, inputs, cost] = forwardPass(initial, dynamics, costs, currentGains, options);
         gains = backwardPass(states, inputs, derivatives, options);

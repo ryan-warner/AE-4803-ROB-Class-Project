@@ -1,0 +1,86 @@
+function [X] = fnsimulate(gamma1,xo,u_new,Horizon,dt)
+
+X = xo;
+
+m = 0.5; I_xx = 0.0032; I_yy = 0.0032; I_zz = 0.0055;
+k_t = 0.01691; l = 0.17; grav = 9.81;
+
+% let desired location x_d  = origin of system
+xd = X(1,1); yd = X(2,1); zd = X(3,1);
+
+h1_d = (0-2.2)^2 + (0-2.2)^2 + (0-1)^2   - 1;
+h2_d = (0)^2     + (0+0.2)^2 + (0)^2     - 1;
+h3_d = (0-3)^2   + (0)^2     + (0-0.5)^2 - 1;
+
+% beta_d = 1/h(x_desired);
+beta_d = 1/h1_d + 1/h2_d + 1/h3_d;
+
+
+% initialize w_kplus1
+w_kplus1 = 0.01;
+
+    for k = 1:(Horizon-1)
+
+        % states
+        x_k = X(1,k); y_k = X(2,k); z_k = X(3,k);
+        x_k_dot = X(4,k); y_k_dot = X(5,k); z_k_dot = X(6,k);
+        phi_k = X(7,k); theta_k = X(8,k); psi_k = X(9,k);
+        p_k = X(10,k); q_k = X(11,k); r_k = X(12,k);
+
+        % inputs
+        f1 = u_new(1,k);
+        f2 = u_new(2,k);
+        f3 = u_new(3,k);
+        f4 = u_new(4,k);
+
+        Fx = [x_k_dot; 
+              y_k_dot; 
+              z_k_dot; 
+              -(sin(theta_k)*(f1 + f2 + f3 + f4))/m; 
+              (cos(theta_k)*sin(phi_k)*(f1 + f2 + f3 + f4))/m; 
+              (f1*cos(phi_k)*cos(theta_k) - grav*m + f2*cos(phi_k)*cos(theta_k) + f3*cos(phi_k)*cos(theta_k) + f4*cos(phi_k)*cos(theta_k))/m; 
+              p_k + r_k*cos(phi_k)*tan(theta_k) + q_k*sin(phi_k)*tan(theta_k); 
+              q_k*cos(phi_k) - r_k*sin(phi_k); 
+              (r_k*cos(phi_k))/cos(theta_k) + (q_k*sin(phi_k))/cos(theta_k); 
+              (q_k*r_k*(I_yy - I_zz) + (sqrt(2)*l*(f1 - f2 + f3 - f4))/2)/I_xx; 
+              -(p_k*r_k*(I_xx - I_zz) + (sqrt(2)*l*(f1 + f2 - f3 - f4))/2)/I_yy; 
+              (k_t*(f1 - f2 - f3 + f4))/I_zz;
+              w_kplus1];
+     
+
+        X(:,k+1) = X(:,k) + Fx*dt;
+    
+        % barrier functions at current step
+        h1_k = (x_k-2.2)^2 + (y_k-2.2)^2 + (z_k-1)^2   - 1;
+        h2_k = (x_k)^2     + (y_k+0.2)^2 + (z_k)^2     - 1;
+        h3_k = (x_k-3)^2   + (y_k)^2     + (z_k-0.5)^2 - 1;
+
+        % beta_k = 1/h(x_k)
+        beta_k = 1/h1_k + 1/h2_k + 1/h3_k;
+
+        % w_k = beta_k - beta_d
+        w_k = beta_k - beta_d;
+
+        % x_k+1 = f(x_k,u_k) = x_k + Fx*dt
+        x_kplus1 = X(1,end); y_kplus1 = X(2,end); z_kplus1 = X(3,end);
+        
+        % barrier functions at next step
+        % h(f(x_k,u_k)) = h(x_k+1)
+        h1_kplus1 = (x_kplus1-2.2)^2 + (y_kplus1-2.2)^2 + (z_kplus1-1)^2   - 1;
+        h2_kplus1 = (x_kplus1)^2     + (y_kplus1+0.2)^2 + (z_kplus1)^2     - 1;
+        h3_kplus1 = (x_kplus1-3)^2   + (y_kplus1)^2     + (z_kplus1-0.5)^2 - 1;
+
+        % sum beta_k+1 = sum 1/h(f(x_k,u_k)) = sum 1/h(x_k+1)
+        beta_kplus1 = 1/h1_kplus1 + 1/h2_kplus1 + 1/h3_kplus1;
+
+        % w_k+1 = 1/h(x_k+1) - beta_d - gamma*(w_k + beta_d - 1/h(x_k))
+        w_kplus1 = beta_kplus1 - beta_d - gamma1*(w_k + beta_d - (beta_k));
+
+        X(end,:) = w_k;
+        Fx(end,:) = w_kplus1;
+
+        X(:,k+1) = X(:,k) + Fx*dt;
+
+    end
+
+end
