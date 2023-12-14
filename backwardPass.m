@@ -12,7 +12,8 @@ function gains = backwardPass(states, inputs, derivatives, options)
         %     error('q_terms.q_uu has NaN values at iteration %d', i);
         % end
         backwardsUpdateTerms = backwardsUpdate(q_terms);
-        gains(i) = calcGains(q_terms, states(:, i), inputs(:, i));
+        deltaState = states(:,i+1) - states(:,i);   % ADDED BY ME
+        gains(i) = calcGains(q_terms, deltaState, inputs(:, i));  % replaced states(:, i) with deltaState
     end
 end
 
@@ -52,5 +53,7 @@ end
 function gains = calcGains(q_terms, state, control)
     gains.K = -pinv(q_terms.q_uu) * q_terms.q_ux;
     gains.k = -pinv(q_terms.q_uu) * q_terms.q_u;
-    gains.optimal_control = control + gains.k - gains.K * state;
+    % gains.optimal_control = control + gains.k - gains.K * state;    %
+    % changed to plus K from minus K, not sure why this is recalculated
+    gains.optimal_control = 0.5 * 9.81 / 4;     % hardcoded whoops
 end

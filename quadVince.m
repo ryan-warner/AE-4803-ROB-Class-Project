@@ -37,14 +37,14 @@ p_dot = (sqrt(2) / 2 * (u(1) + u(3) - u(2) - u(4)) * rotorMomentArm - (I_zz - I_
 q_dot = (sqrt(2) / 2 * (u(3) + u(4) - u(1) - u(2)) * rotorMomentArm + (I_zz - I_xx) * x(10) * x(12)) / I_yy;
 r_dot =  (rotorTorqueConstant * (u(1) + u(4) - u(2) - u(3))) / I_zz;
 
-symbolic_dynamics = [x(4); x(5); x(6); x_ddot(1); x_ddot(2); x_ddot(3); euler_dot(1); euler_dot(2); euler_dot(3); p_dot; q_dot; r_dot];
-dynamics = matlabFunction(symbolic_dynamics, Vars={x, u});
+symbolic_dynamics = x + dt .* [x(4); x(5); x(6); x_ddot(1); x_ddot(2); x_ddot(3); euler_dot(1); euler_dot(2); euler_dot(3); p_dot; q_dot; r_dot];  % changed this
+dynamics = matlabFunction(symbolic_dynamics, 'Vars', {x, u});
 
 dynamics_derivatives = matlabFunction(jacobian(symbolic_dynamics, x), ...
                             jacobian(symbolic_dynamics, u), ...
                             reshape(jacobian(reshape(jacobian(symbolic_dynamics, x), n * n, 1), x), n, n, n), ...
                             reshape(jacobian(reshape(jacobian(symbolic_dynamics, u), n * m, 1), u), n, m, m), ...
                             reshape(jacobian(reshape(jacobian(symbolic_dynamics, u), n * m, 1), x), n, m, n), ...
-                            Vars={x, u}, Outputs={'fx', 'fu', 'fxx', 'fuu', 'fxu'});
+                            'Vars', {x, u}, 'Outputs', {'fx', 'fu', 'fxx', 'fuu', 'fxu'});
 
 disp(jacobian(symbolic_dynamics, x))

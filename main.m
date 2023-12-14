@@ -20,7 +20,7 @@ quadVince;
 hover_thrust = mass * gravity / 4;
 
 Q = 1.0 * diag([0.1, 0.1, 100, 1.0, 1.0, 350, 1.0, 1.0, 1.0, 70, 70, 70]);
-R = 0.01 * diag([1.0, 1.0, 1.0, 1.0]);
+R = .01 * diag([1.0, 1.0, 1.0, 1.0]);
 Qf = 1.0 * diag([100, 100, 100, 100, 100, 1000, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]);
 
 %Q = 1.0 * diag([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
@@ -51,9 +51,9 @@ options.n = size(x, 1);
 options.m = size(u, 1);
 options.maxIterations = 20;
 
-[gains, iadp_costs] = IADP_FINAL(ic, dynamics, costs, derivatives, options);
+[gains, iadp_costs, prevStates] = IADP_FINAL(ic, dynamics, costs, derivatives, options);
 
-[ddp_states, ddp_inputs, ~] = forwardPass(ic, dynamics, costs, gains, options);
+[ddp_states, ddp_inputs, ~] = forwardPass(ic, dynamics, costs, gains, options, prevStates);
 
 disp("Done :)")
 time(1)=0;

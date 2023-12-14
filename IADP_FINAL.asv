@@ -1,4 +1,4 @@
-function [currentGains, iterationCosts, prevStates] = IADP_FINAL(initial, dynamics, costs, derivatives, options)
+function [currentGains, iterationCosts] = IADP_FINAL(initial, dynamics, costs, derivatives, options)
     iterationCosts = zeros([1, options.maxIterations]);
     hover_thrust = 0.5 * 9.81 / 4;
     % currentGains = repmat(struct('K', randn(options.m, options.n), 'k', randn(options.m, 1), 'optimal_control', hover_thrust * ones(options.m, 1)), options.horizon, 1);
@@ -21,7 +21,7 @@ function [currentGains, iterationCosts, prevStates] = IADP_FINAL(initial, dynami
             currentGains = tempGains;
         end
 
-        prevStates = newStates;
+        prevStates
         fprintf('Iteration: %i | Cost: %.08f\n', i, iterationCosts(i));
     end
 
