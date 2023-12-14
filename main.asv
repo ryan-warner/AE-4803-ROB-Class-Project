@@ -21,11 +21,11 @@ hover_thrust = mass * gravity / 4;
 
 Q = 1.0 * diag([0.1, 0.1, 100, 1.0, 1.0, 350, 1.0, 1.0, 1.0, 70, 70, 70]);
 R = 0.01 * diag([1.0, 1.0, 1.0, 1.0]);
-Qf = 1.0 * diag([100, 100, 100, 100, 100, 1000, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]);
+Qf = 1.0 * diag([2000, 2000, 2000, 100, 100, 1000, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]);
 
 %Q = 1.0 * diag([1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-%R = 10000000.0 * diag([1, 1, 1, 1]);
-%Qf = 1000.0 * diag([1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+%R = 10.0 * diag([1, 1, 1, 1]);
+%Qf = 10.0 * diag([1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
 
 ic = [-3; -2; -1; 0; 0; 0; 0; 0; 0; 0; 0; 0];
 goal_state = [5; 3; 2; 0; 0; 0; 0; 0; 0; 0; 0; 0];
@@ -56,14 +56,10 @@ options.maxIterations = 20;
 [ddp_states, ddp_inputs, ~] = forwardPass(ic, dynamics, costs, gains, options);
 
 disp("Done :)")
-time(1)=0;
-for i= 2:options.horizon
-    time(i) =time(i-1) + options.timestep;  
-end
 
-[test, test2] = quadrotor_visualize(ddp_states, ddp_inputs, time);
+quadrotor_visualize(ddp_states, ddp_input, )
 
-%plot3(ddp_states(1, :), ddp_states(2, :), ddp_states(3, :))
+plot3(ddp_states(1, :), ddp_states(2, :), ddp_states(3, :))
 
 %% Quadcopter Recursive Model Predictive Control (rMPC)
 
