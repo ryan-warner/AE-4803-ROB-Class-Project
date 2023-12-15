@@ -50,6 +50,8 @@ options.horizon = options.tf / options.timestep;
 options.n = size(x, 1);
 options.m = size(u, 1);
 options.maxIterations = 20;
+% initialize starting gain guess
+options.currentGains = repmat(struct('K', randn(options.m, options.n), 'k', randn(options.m, 1), 'optimal_control', hover_thrust * ones(options.m, 1)), options.horizon, 1);
 
 [gains, iadp_costs] = IADP_FINAL(ic, dynamics, costs, derivatives, options);
 
@@ -66,5 +68,39 @@ end
 %plot3(ddp_states(1, :), ddp_states(2, :), ddp_states(3, :))
 
 %% Quadcopter Recursive Model Predictive Control (rMPC)
+
+finalControl = horizon - 1;   % final time step for control to be input, tf-1
+
+currState = ic;
+numIterations = 3;  % number of iterations of DDP to be ran
+[warmDDP, ~] = IADP_FINAL(ic, dynamics, costs, derivatives, options);    % a warm start for the DDP code, giving full vector of control inputs
+prevInputs = cell2mat((arrayfun(@(x) x.optimal_control, warmDDP, 'UniformOutput', false)).');     % some initial guess for the control, maybe from a full iteration warm DDP start
+stateVec = zeros(length(ic), horizon+1);   % initializing a state vector to track, not sure on dimensions
+stateVec(:,1) = ic;
+inputVec = zeros(length(prevInputs(:,1)), finalControl+1);    % initializing control vector
+prevState = ic;
+prevGains = warmDDP;
+
+
+% we have input and state at time 0
+for t = 1:horizon        
+    timeRem = finalControl - t; % number of control inputs remaining
+    options.horizon = timeRem;
+    options.maxIterations = numIterations;
+    options.currentGains = prevGains;
+ 
+    [nextGains, ~] = IADP_FINAL(currState, dynamics, costs, derivatives, options); % will run the warm start an additional # of times
+    nextInputs = cell2mat((arrayfun(@(x) x.optimal_control, nextGains, 'UniformOutput', false)).');
+    appInput = nextInputs(:,1);
+    nextState = dynamics(prevState, appInput);
+    inputVec(:,t) = appInput;
+    stateVec(:,t+1) = nextState;
+    prevState = nextState;
+    prevInputs = nextInputs;
+    prevGains = nextGains;
+
+    
+end
+
 
 %% Obstacle Avoidance with Discrete Barrier States

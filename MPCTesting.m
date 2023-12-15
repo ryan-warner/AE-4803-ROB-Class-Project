@@ -1,4 +1,4 @@
-% test file for implementing Recursive MPC
+% Recursive MPC
 tf = 8;     % seconds
 deltaT = .01;
 finalStep = tf / deltaT;
@@ -8,7 +8,7 @@ inputInit = 0;  % NEEDS TO BE ASSIGNED
 
 currState = xinit;
 numIterations = 3;  % number of iterations of DDP to be ran
-warmDDP = DDP();    % a warm start for the DDP code, giving full vector of control inputs
+[warmDDP = IADP_Final(initial, dynamics, costs, derivatives, options);    % a warm start for the DDP code, giving full vector of control inputs
 prevInputs = warmDDP;     % some initial guess for the control, maybe from a full iteration warm DDP start
 stateVec = zeros(length(xinit), finalStep+1);   % initializing a state vector to track, not sure on dimensions
 stateVec(:,1) = xinit;
